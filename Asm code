@@ -1,0 +1,59 @@
+.global _start
+_start:
+    .data
+    
+a: .word 11
+.word 12
+.word 23
+.word 13
+.word 6
+.word 34
+
+b: .word 10
+.word 11
+.word 14
+.word 16
+.word 23
+.word 17
+
+.text
+
+addi sp,sp,-16 #sp=sp-16 is done to store the elements of resultant matrix "c" after multiplication
+li x23,12 #elements of next row and of same column differ by address of 12 in matrix "a"
+li x21,4 #element of next column and of same row differ by address 4 in matrix "b"
+li x10,2 #number of rows in matrix "a" and columns in matrix "b" 
+li x11,3 #number of rows in matrix "b" and columns in matrix "a" 
+li x12,0 # i -> x12, i=0
+loop1: beq x10,x12,exit1 # if(i==2){ goto exit1 }
+       mul x16,x12,x23  # x16=i*12(for succesive rows compensation)
+       li x13,0 # j -> x13, j=0 
+loop2: beq x10,x13,exit2 # if(j==2){ goto exit2 }
+       li x14,0 # k -> x14, k=0
+       li x15,0  #sum -> x15, sum=0
+       la s0,a  # *a[0][0] -> s0
+       add s0,s0,x16 # s0=s0+i*12,s0->a[i][0]
+       la s1,b  # *b[0][0] -> s1
+       mul x17,x13,x21  # x17=j*4(for successive columns compensation)
+       add s1,s1,x17    # s1->b[0][j]
+loop3: beq x11,x14,exit3 # if(k==3){ goto exit3 }
+       lw x18,0(s0)    # a[i][k] -> x18
+       addi s0,s0,4    #s0->a[i][k+1]
+       lw x19,0(s1) # b[k][j] -> x19
+       mul x20,x19,x18 # a[i][k]*b[k][j]
+       add x15,x15,x20 # sum=sum + a[i][k]*b[k][j]
+       addi s1,s1,8 # s1->b[k+1][j],element of next row of same column differ by address 8
+       addi,x14,x14,1 # k++
+       j loop3
+exit3: sw x15,0(sp) # storing elements of resultant matrix "c" in memory
+       addi,sp,sp,4 # updating the stack pointer
+       addi x13,x13,1 # j++
+       j loop2
+exit2: addi,x12,x12,1 # i++
+       j loop1
+exit1:nop
+
+addi sp sp -16 #displaying the elements of the matrix "c"
+lw x10,0(sp) #c[0][0]->x10
+lw x11,4(sp) #c[0][1]->x11
+lw x12,8(sp) #c[1][0]->x12
+lw x13,12(sp) #c[1][1]->x13
